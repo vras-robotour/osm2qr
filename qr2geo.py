@@ -26,9 +26,9 @@ class QR2Geo:
         rospy.loginfo('QR2Geo node initialized')
 
     def read_qr(self, ros_data):
-        np_arr = np.fromstring(ros_data.data, np.uint8)
-        image_np = cv2.imdecode(np_arr, cv2.IMREAD_COLOR)
-        codes = pyzbar.decode(image_np)
+        data = np.fromstring(ros_data.data, np.uint8)
+        image = cv2.imdecode(data, cv2.IMREAD_COLOR)
+        codes = pyzbar.decode(image)
         geo_codes = []
 
         if not codes:
@@ -46,7 +46,8 @@ class QR2Geo:
                         rospy.loginfo('No Geo QR code detected')
         return np.array(geo_codes)
 
-if name == '__main__':
+
+if __name__ == '__main__':
     barcode = './codes/prague_castle.png'
     qr2geo = QR2Geo()
     rospy.spin()

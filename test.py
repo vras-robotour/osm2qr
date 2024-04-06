@@ -23,8 +23,6 @@ def qr2geo(barcode):
 			if data[:3] == 'geo':
 				print('Geo QR code detected')
 				lat, lon = data[4:].split(',')
-				# print lat type
-				print(type(lat))
 				geo_codes.append((lat, lon))
 			else:
 				print('No Geo QR code detected')

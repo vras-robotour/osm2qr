@@ -17,23 +17,21 @@ class Geo2QR:
 		self.sub = rospy.Subscriber('/geo2qr/geo', String, queue_size=10)
 
 		# publisher
-		self.pub = rospy.Publisher('/geo2qr/qr_codes', CompressedImage, self.geo2qr)
+		self.pub = rospy.Publisher('/geo2qr/qr_codes', CompressedImage, self.create_qr)
 
 		self.initialized = True
 		rospy.loginfo('Geo2QR node initialized')
 
-	def geo2qr(self, geo):
+	def create_qr(self, geo):
 		geo_str = f"geo:{geo[0]},{geo[1]}"
 		return pyqrcode.create(geo_str)
 
 
 if __name__ == '__main__':
-    lat = 50.089748
-    lon = 14.398400
-    geo = (lat, lon)
-    filename = 'geo_qr.png'
+	lat = 50.089748
+	lon = 14.398400
+	geo = (lat, lon)
 
-    # qr = geo2qr(geo)
-    # qr.png(filename, scale=10)
-	geo2qr = Geo2QR()
+	barcode = 'geo_qr.png'
+	qr = Geo2QR()
 	rospy.spin()
