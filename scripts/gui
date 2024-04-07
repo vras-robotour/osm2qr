@@ -1,14 +1,15 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
-import sys
-sys.path.append('./../map_data/scripts/')
-sys.path.append('./../map_data/data/')
-import tkinter as tk
-import tkinter.font as tkFont
-import pyqrcode
-import pickle
-from PIL import Image, ImageTk
 import utm
+import pickle
+import pyqrcode
+import tkinter as tk
+from PIL import Image, ImageTk
+
+import rospy
+
+from map_data.map_data import MapData
+
 
 class GUI:
     def __init__(self):
@@ -19,15 +20,18 @@ class GUI:
         self.window_destroy_key = 'w'
         self.save_qr_key = 's'
         self.wait_restore = 3000 # ms
+
         # BACKGROUND IMAGE
-        self.bgd_path = sys.path[-1]
-        self.bgd_name = "bgd_map.png"
-        self.coords_name = "buchlovice_1.mapdata"
+        self.bgd_path = rospy.get_param("~bgd_path", None)
+        self.bgd_name = rospy.get_param("~bgd_name", "bgd_map.png")
+        self.coords_name = rospy.get_param("~coords_name", "buchlovice.mapdata")
         self.coords_data = self.load_map_data(self.coords_name)
+
         # DOT
         self.dot_color = "red"
         self.dot_size = 12 # px
         self.is_dot = False
+
         # BOTTOM FRAME
         self.bottom_frame_text = "Latitude: {0}, Longitude: {1}"
         self.bottom_frame_bg = "white"
@@ -35,17 +39,20 @@ class GUI:
         self.font_size = self.window_width // 50
         self.text_font = (self.font_type, self.font_size)
         self.text_font_italic = (self.font_type, self.font_size, "italic")
-        self.instructions = "Click on the map to get latitude and longitude" 
+        self.instructions = "Click on the map to get latitude and longitude"
+
         # LATLON
         self.lat = None
         self.lon = None
         self.counter = 0
+
         # QR CODE
+        self.save_path = rospy.get_param("~save_path", None)
         self.qr_scale = 8
         self.saved = "QR code no. {0} was saved."
 
     def create_window(self):
-        """ Create main window """
+        """ Create gui window """
         self.root = tk.Tk()
         self.root.title(self.window_title)
 
@@ -72,6 +79,8 @@ class GUI:
         if event.char.lower() == self.window_destroy_key.lower():
             self.root.destroy()
             print("RoboTour GUI closed.")
+            exit(0)
+
         # Generate and save QR code with 's' key press
         if event.char.lower() == self.save_qr_key.lower():
             if self.counter > 0:
@@ -81,6 +90,7 @@ class GUI:
                 self.root.after(self.wait_restore, self.restore_window)
             else: 
                 print("No coordinates selected yet!")
+
         # Restore window with 'r' key press
         if event.char.lower() == 'r':
             self.restore_window()
@@ -88,6 +98,7 @@ class GUI:
     def cursor_click(self, event):
         """ Get cursor click coordinates and draw red dot """
         self.counter += 1
+
         # Remove old dot if drawn and draw new one
         if self.is_dot:
             self.restore_window()
@@ -128,7 +139,7 @@ class GUI:
 
     def load_map_data(self, file_name):
         """ Load map data from file """
-        with open(sys.path[-1] + file_name, "rb") as fh:
+        with open(self.bgd_path + file_name, "rb") as fh:
             map_data = pickle.load(fh)
             return map_data.coords_data
 
@@ -155,10 +166,15 @@ class GUI:
         """ Create and save QR code with geo coordinates """
         geo_str = f"geo:{geo[0]},{geo[1]}"
         qr = pyqrcode.create(geo_str)
-        return qr.png(f'qr{self.counter}.png', scale=self.qr_scale)
+        return qr.png(self.save_path + f"qr{self.counter}.png", scale=self.qr_scale)
 
 
-if __name__ == "__main__":
+def main():
+    rospy.init_node("qr_qui")
     window = GUI()
     window.create_window()
     window.run()
+    rospy.spin()
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,47 @@
+#!/usr/bin/env python
+
+import cv2
+import numpy as np
+import pyzbar.pyzbar as pyzbar
+# pyzbar install: https://pypi.org/project/pyzbar/
+
+import rospy
+from std_msgs.msg import String
+from sensor_msgs.msg import CompressedImage
+
+
+class QR2Geo:
+    def __init__(self):
+        self.camera_topic = rospy.get_param("~camera_topic", None)
+        self.geocode_topic = rospy.get_param("~geocode_topic", "/geocode")
+
+        self.sub = rospy.Subscriber(self.camera_topic, CompressedImage, self.read_qr)
+
+        self.pub = rospy.Publisher(self.geocode_topic, String, queue_size=10)
+
+    def read_qr(self, ros_data):
+        """ Read QR code from camera topic and publish geocode """
+        data = np.fromstring(ros_data.data, np.uint8)
+        image = cv2.imdecode(data, cv2.IMREAD_COLOR)
+        codes = pyzbar.decode(image)
+        geo_codes = []
+
+        if codes:
+            for code in codes:
+                if code.type == "QRCODE":
+                    data = code.data.decode("utf-8")
+                    if data[:3] == "geo":
+                        rospy.loginfo("Geo QR code detected")
+                        msg = String()
+                        msg.data = data
+                        self.pub.publish(msg)
+        return np.array(geo_codes)
+
+
+def main():
+    rospy.init_node("qr2geo")
+    qr2geo = QR2Geo()
+    rospy.spin()
+
+if __name__ == "__main__":
+    main()

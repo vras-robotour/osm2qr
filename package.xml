@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package format="3">
+  <name>osm2qr</name>
+  <version>1.0.0</version>
+  <description>OSM conversion to QR code.</description>
+  <url type="website">https://github.com/vras-robotour/osm2qr</url>
+
+  <author email="lehkysim@fel.cvut.cz">Simon Lehky</author>
+  <maintainer email="lehkysim@fel.cvut.cz">Simon Lehky</maintainer>
+
+  <license>BSD</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <depend>map_data</depend>
+
+  <exec_depend>rospy</exec_depend>
+
+  <exec_depend condition="$ROS_DISTRO != noetic">python-utm-pip</exec_depend>
+
+  <exec_depend condition="$ROS_DISTRO == noetic">python3-utm</exec_depend>
+
+</package>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<launch>
+    <arg name="camera_topic" default=""
+         doc="Camera topic for QR images."/>
+    <arg name="geocode_topic" default=""
+         doc="Topic for publishing detected QR codes."/>
+
+    <node name="qr2geo" pkg="osm2qr" type="qr2geo" output="screen">
+
+        <rosparam subst_value="true">
+            camera_topic: $(arg camera_topic)
+            geocode_topic: $(arg geocode_topic)
+        </rosparam>
+    </node>
+</launch>
