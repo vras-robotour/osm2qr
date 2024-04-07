@@ -12,16 +12,13 @@ from sensor_msgs.msg import CompressedImage
 
 class QR2Geo:
     def __init__(self):
-        self.camera_topic = rospy.get_param("~camera_topic", None)
-        self.geocode_topic = rospy.get_param("~geocode_topic", "/geocode")
+        self.sub = rospy.Subscriber("camera", CompressedImage, self.read_qr)
 
-        self.sub = rospy.Subscriber(self.camera_topic, CompressedImage, self.read_qr)
-
-        self.pub = rospy.Publisher(self.geocode_topic, String, queue_size=10)
+        self.pub = rospy.Publisher("geocode", String, queue_size=10)
 
     def read_qr(self, ros_data):
         """ Read QR code from camera topic and publish geocode """
-        data = np.fromstring(ros_data.data, np.uint8)
+        data = np.frombuffer(ros_data.data, np.uint8)
         image = cv2.imdecode(data, cv2.IMREAD_COLOR)
         codes = pyzbar.decode(image)
         geo_codes = []
