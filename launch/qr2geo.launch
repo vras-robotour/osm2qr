@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <launch>
-    <arg name="robot", default="spot-3"/><group if="$(eval {'ctu-robot': 0, 'flip': 0, 'marv': 0, 'spot-3': 0}[robot])"/>
+    <arg name="robot" default="spot-3"/><group if="$(eval {'ctu-robot': 0, 'flip': 0, 'marv': 0, 'spot-3': 0}[robot])"/>
     <arg name="camera_topic" value="TODO" if="$(eval robot == 'ctu-robot')"/>
     <arg name="camera_topic" value="TODO" if="$(eval robot == 'flip')"/>
     <arg name="camera_topic" value="TODO" if="$(eval robot == 'marv')"/>
