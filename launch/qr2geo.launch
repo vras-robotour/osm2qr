@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <launch>
-    <arg name="robot" default="spot-3"/><group if="$(eval {'ctu-robot': 0, 'flip': 0, 'marv': 0, 'spot-3': 0}[robot])"/>
-    <arg name="camera_topic" value="TODO" if="$(eval robot == 'ctu-robot')"/>
+    <arg name="robot" default="spot-3"/><group if="$(eval {'ctu-robot': 0, 'flip': 0, 'marv-robot': 0, 'spot-3': 0}[robot])"/>
+    <arg name="camera_topic" value="viz/camera_4/image/compressed" if="$(eval robot == 'ctu-robot')"/>
     <arg name="camera_topic" value="TODO" if="$(eval robot == 'flip')"/>
-    <arg name="camera_topic" value="TODO" if="$(eval robot == 'marv')"/>
+    <arg name="camera_topic" value="camera_front/image_color/compressed" if="$(eval robot == 'marv-robot')"/>
     <arg name="camera_topic" value="camera_front/image_color/compressed" if="$(eval robot == 'spot-3')"/>
 
     <node name="qr2geo" pkg="osm2qr" type="qr2geo" output="screen">
