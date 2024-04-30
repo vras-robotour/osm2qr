@@ -22,9 +22,9 @@ class RVIZ2QR:
 		self.tf = Buffer()
 		self.qr = None
 
-		self.nav_pose_sub = rospy.Subscriber('move_base_simple/goal', PoseStamped, self.create_qr_cb)
+		self.nav_pose_sub = rospy.Subscriber('goal', PoseStamped, self.create_qr_cb)
 
-		self.qr_pub = rospy.Publisher('/rviz_qr_codes', CompressedImage, queue_size=1)
+		self.qr_pub = rospy.Publisher('qr_code', CompressedImage, queue_size=1)
 	
 	def create_qr_cb(self, msg):
 		""" Create and publish QR code given PoseStamped message """
