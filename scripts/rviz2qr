@@ -54,7 +54,7 @@ class RVIZ2QR:
 		return geo
 
 	def create_qr(self, geo):
-		"""	Create QR with geo coordinates """
+		""" Create QR with geo coordinates """
 		geo_str = f"geo:{geo[0]},{geo[1]}"
 		return pyqrcode.create(geo_str)
 	
@@ -67,9 +67,9 @@ class RVIZ2QR:
 		
 
 def main():
-	rospy.init_node('rviz2qr')
+	rospy.init_node("rviz2qr")
 	goal2qr = RVIZ2QR()
 	rospy.spin()
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 	main()
