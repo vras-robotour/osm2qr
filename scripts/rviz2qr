@@ -16,8 +16,8 @@ class RVIZ2QR:
 		self.utm_frame = rospy.get_param('~utm_frame', 'utm')
 		self.local_frame = rospy.get_param('~local_frame', 'map')
 		self.target_altitude = rospy.get_param('~target_altitude', 0.0)
-		self.zone = rospy.get_param('~zone', 33)
-		self.hemisphere = rospy.get_param('~hemisphere', 'U')
+		self.zone = 33
+		self.hemisphere = 'U'
 
 		self.tf = Buffer()
 		self.qr = None
@@ -27,12 +27,13 @@ class RVIZ2QR:
 		self.qr_pub = rospy.Publisher('/rviz_qr_codes', CompressedImage, queue_size=1)
 	
 	def create_qr_cb(self, msg):
-		""" Create QR code given PoseStamped message """
+		""" Create and publish QR code given PoseStamped message """
 		self.local_frame = msg.header.frame_id
 		transform = self.tf.lookup_transform(self.local_frame, self.utm_frame, rospy.Time(0), rospy.Duration(60))
 		goal = np.array([msg.pose.position.x, msg.pose.position.y, self.target_altitude])
 		geo = self.transform_to_latlon(transform, goal)
 		self.qr = self.create_qr(geo)
+		self.qr_pub.publish(self.qr)
 
 	def transform_to_latlon(self, transform, point):
 		""" Transform point from local frame to latitute and longitude """
@@ -49,7 +50,6 @@ class RVIZ2QR:
 def main():
 	rospy.init_node('rviz2qr')
 	goal2qr = RVIZ2QR()
-	goal2qr.qr_pub.publish(goal2qr.qr)
 	rospy.spin()
 
 if __name__ == '__main__':
