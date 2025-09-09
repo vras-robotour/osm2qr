@@ -9,6 +9,7 @@ from rclpy.node import Node
 from rclpy.action import ActionClient
 
 from std_msgs.msg import String
+from geographic_msgs.msg import GeoPose
 from sensor_msgs.msg import CompressedImage
 from nav2_msgs.action import FollowGPSWaypoints
 
@@ -52,16 +53,47 @@ class QR2Geo(Node):
                 if code.type == "QRCODE":
                     data = code.data.decode("utf-8")
                     if data[:3] == "geo":
-                        data = data[4:].split(",").strip()
-                        self.get_logger().info(data)
+                        data = list(map(float, data[4:].split(",").strip()))
                         self.last_geo = self.get_clock().now()
-                        self.get_logger().info("Geo QR code detected")
+                        self.get_logger().info(f"Geo QR code detected: {data}")
+
+                        geo_pose = GeoPose()
+                        geo_pose.position.latitude = data[0]
+                        geo_pose.position.longitude = data[1]
+                        geo_pose.position.altitude = data[2] if data[2] else 0
                         waypoint_msg = FollowGPSWaypoints.Goal()
-                        waypoint_msg.gps_poses = ...
+                        waypoint_msg.gps_poses = [geo_pose]
+
+                        send_goal_future = self._action_client.send_goal_async(
+                            waypoint_msg, feedback_callback=self.feedback_callback
+                        )
+                        send_goal_future.add_done_callback(self.goal_response_callback)
 
                         msg = String()
                         msg.data = "Geo QR code detected"
                         self.pub.publish(msg)
+
+    def goal_response_callback(self, future):
+        self.goal_handle = future.result()
+        if not self.goal_handle.accepted:
+            self.get_logger().error("Goal rejected by server")
+            return
+
+        self.get_logger().info("Goal accepted by server")
+        result_future = self.goal_handle.get_result_async()
+        result_future.add_done_callback(self.result_callback)
+
+    def feedback_callback(self, feedback_msg):
+        # self.send_data_url("update")
+        pass
+
+    def result_callback(self, future):
+        result = future.result().result
+        if result.missed_waypoints:
+            self.get_logger().warn(f"Missed waypoints: {result.missed_waypoints}")
+        else:
+            self.get_logger().info("Successfully navigated all waypoints")
+        rclpy.shutdown()
 
 
 def main():
