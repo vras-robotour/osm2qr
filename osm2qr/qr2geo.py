@@ -42,11 +42,14 @@ class QR2Geo(Node):
 
         if self.talk_topic != "":
             self.pub = self.create_publisher(String, self.talk_topic, 10)
-            self.talk_msg = String()
+            self.talk_detect = String()
+            self.talk_finish = String()
             if "cs" in self.talk_topic:
-                self.talk_msg.data = "QR kód detekován"
+                self.talk_detect.data = "QR kód detekován"
+                self.talk_finish.data = "Cíl dosažen"
             else:
-                self.talk_msg.data = "Geo QR code detected"
+                self.talk_detect.data = "Geo QR code detected"
+                self.talk_finish.data = "Goal reached"
 
         self.action_client = ActionClient(
             self, FollowGPSWaypoints, "follow_gps_waypoints"
@@ -68,7 +71,7 @@ class QR2Geo(Node):
                     data = code.data.decode("utf-8")
                     if data[:3] == "geo":
                         if self.talk_topic != "":
-                            self.pub.publish(self.talk_msg)
+                            self.pub.publish(self.talk_detect)
 
                         data = list(map(float, data[4:].strip().split(",")))
                         self.last_geo = self.get_clock().now()
@@ -112,6 +115,8 @@ class QR2Geo(Node):
             self.send_goal_()
         else:
             self.get_logger().info("Successfully navigated all waypoints")
+            if self.talk_topic != "":
+                self.pub.publish(self.talk_finish)
 
 
 def main():
