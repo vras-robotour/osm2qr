@@ -19,12 +19,16 @@ class QR2Geo(Node):
         super().__init__("qr2geo")
         self.declare_parameter("camera_topic", "camera")
         self.declare_parameter("talk_topic", "")
+        self.declare_parameter("read_interval", 10.0)
+        self.declare_parameter("plan_wait", 5.0)
         self.camera_topic = (
             self.get_parameter("camera_topic").get_parameter_value().string_value
         )
         self.talk_topic = (
             self.get_parameter("talk_topic").get_parameter_value().string_value
         )
+        self.read_interval = self.get_parameter("read_interval")
+        self.plan_wait = self.get_parameter("plan_wait")
 
         self.sub = self.create_subscription(
             CompressedImage, self.camera_topic, self.read_qr_, 10
@@ -42,7 +46,7 @@ class QR2Geo(Node):
         """Read QR code from camera topic and publish geocode"""
         if (self.last_geo is not None) and (
             (self.get_clock().now() - self.last_geo).nanoseconds * 1e-9
-        ) < 5:
+        ) < self.read_interval:
             return
 
         image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
@@ -53,6 +57,10 @@ class QR2Geo(Node):
                 if code.type == "QRCODE":
                     data = code.data.decode("utf-8")
                     if data[:3] == "geo":
+                        msg = String()
+                        msg.data = "Geo QR code detected"
+                        self.pub.publish(msg)
+
                         data = list(map(float, data[4:].strip().split(",")))
                         self.last_geo = self.get_clock().now()
                         self.get_logger().info(f"Geo QR code detected: {data}")
@@ -60,18 +68,17 @@ class QR2Geo(Node):
                         geo_pose = GeoPose()
                         geo_pose.position.latitude = data[0]
                         geo_pose.position.longitude = data[1]
-                        geo_pose.position.altitude = data[2] if data[2] else 0
                         waypoint_msg = FollowGPSWaypoints.Goal()
                         waypoint_msg.gps_poses = [geo_pose]
 
-                        send_goal_future = self._action_client.send_goal_async(
+                        self.get_clock().sleep_for(
+                            rclpy.duration.Duration(seconds=self.plan_wait)
+                        )
+
+                        send_goal_future = self.action_client.send_goal_async(
                             waypoint_msg, feedback_callback=self.feedback_callback
                         )
                         send_goal_future.add_done_callback(self.goal_response_callback)
-
-                        msg = String()
-                        msg.data = "Geo QR code detected"
-                        self.pub.publish(msg)
 
     def goal_response_callback(self, future):
         self.goal_handle = future.result()
@@ -93,7 +100,6 @@ class QR2Geo(Node):
             self.get_logger().warn(f"Missed waypoints: {result.missed_waypoints}")
         else:
             self.get_logger().info("Successfully navigated all waypoints")
-        rclpy.shutdown()
 
 
 def main():
