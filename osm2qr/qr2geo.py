@@ -21,6 +21,7 @@ class QR2Geo(Node):
         self.declare_parameter("talk_topic", "")
         self.declare_parameter("read_interval", 10.0)
         self.declare_parameter("plan_wait", 5.0)
+
         self.camera_topic = (
             self.get_parameter("camera_topic").get_parameter_value().string_value
         )
@@ -96,7 +97,6 @@ class QR2Geo(Node):
         result_future.add_done_callback(self.result_callback)
 
     def feedback_callback(self, feedback_msg):
-        # self.send_data_url("update")
         pass
 
     def result_callback(self, future):
