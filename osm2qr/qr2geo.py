@@ -53,7 +53,7 @@ class QR2Geo(Node):
                 if code.type == "QRCODE":
                     data = code.data.decode("utf-8")
                     if data[:3] == "geo":
-                        data = list(map(float, data[4:].split(",").strip()))
+                        data = list(map(float, data[4:].strip().split(",")))
                         self.last_geo = self.get_clock().now()
                         self.get_logger().info(f"Geo QR code detected: {data}")
 
