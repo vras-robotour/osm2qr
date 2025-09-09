@@ -42,6 +42,11 @@ class QR2Geo(Node):
 
         if self.talk_topic != "":
             self.pub = self.create_publisher(String, self.talk_topic, 10)
+            self.talk_msg = String()
+            if "cs" in self.talk_topic:
+                self.talk_msg.data = "QR kód detekován"
+            else:
+                self.talk_msg.data = "Geo QR code detected"
 
         self.action_client = ActionClient(
             self, FollowGPSWaypoints, "follow_gps_waypoints"
@@ -62,9 +67,8 @@ class QR2Geo(Node):
                 if code.type == "QRCODE":
                     data = code.data.decode("utf-8")
                     if data[:3] == "geo":
-                        msg = String()
-                        msg.data = "Geo QR code detected"
-                        self.pub.publish(msg)
+                        if self.talk_topic != "":
+                            self.pub.publish(self.talk_msg)
 
                         data = list(map(float, data[4:].strip().split(",")))
                         self.last_geo = self.get_clock().now()
@@ -73,20 +77,22 @@ class QR2Geo(Node):
                         geo_pose = GeoPose()
                         geo_pose.position.latitude = data[0]
                         geo_pose.position.longitude = data[1]
-                        waypoint_msg = FollowGPSWaypoints.Goal()
-                        waypoint_msg.gps_poses = [geo_pose]
+                        self.waypoint_msg_ = FollowGPSWaypoints.Goal()
+                        self.waypoint_msg_.gps_poses = [geo_pose]
 
                         self.get_clock().sleep_for(
                             rclpy.duration.Duration(seconds=self.plan_wait)
                         )
+                        self.send_goal_()
 
-                        self.get_logger().info("Sending goal to action server")
-                        send_goal_future = self.action_client.send_goal_async(
-                            waypoint_msg, feedback_callback=self.feedback_callback
-                        )
-                        send_goal_future.add_done_callback(self.goal_response_callback)
+    def send_goal_(self):
+        self.get_logger().info("Sending goal to action server")
+        send_goal_future = self.action_client.send_goal_async(
+            self.waypoint_msg_, feedback_callback=self.feedback_callback_
+        )
+        send_goal_future.add_done_callback(self.goal_response_callback_)
 
-    def goal_response_callback(self, future):
+    def goal_response_callback_(self, future):
         self.goal_handle = future.result()
         if not self.goal_handle.accepted:
             self.get_logger().error("Goal rejected by server")
@@ -94,15 +100,16 @@ class QR2Geo(Node):
 
         self.get_logger().info("Goal accepted by server")
         result_future = self.goal_handle.get_result_async()
-        result_future.add_done_callback(self.result_callback)
+        result_future.add_done_callback(self.result_callback_)
 
-    def feedback_callback(self, feedback_msg):
+    def feedback_callback_(self, feedback_msg):
         pass
 
-    def result_callback(self, future):
+    def result_callback_(self, future):
         result = future.result().result
         if result.missed_waypoints:
             self.get_logger().warn(f"Missed waypoints: {result.missed_waypoints}")
+            self.send_goal_()
         else:
             self.get_logger().info("Successfully navigated all waypoints")
 

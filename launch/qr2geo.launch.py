@@ -16,7 +16,7 @@ def generate_launch_description():
                 parameters=[
                     {
                         "camera_topic": "/luxonis/oak/left/image_raw/compressed",
-                        "talk_topic": "/speak/info",
+                        "talk_topic": "/speak_cs/info",
                         "read_interval": 10.0,
                         "plan_wait": 5.0,
                     }
