@@ -14,8 +14,8 @@ from gpxpy import parse as gpxparse
 from background_map import get_background_image
 
 
-OSM_RECTANGLE_MARGIN = 100  # meters, margin around the map
-RESERVE = 50  # meters, reserve around the waypoints
+OSM_RECTANGLE_MARGIN = 50  # meters, margin around the map
+RESERVE = 10  # meters, reserve around the waypoints
 
 
 class GUI:
@@ -189,7 +189,7 @@ class GUI:
                 [[int(char) for char in line] for line in lines], dtype=np.uint8
             )
             plt.figure(figsize=(5, 5))
-            plt.imshow(img, cmap="gray")
+            plt.imshow(1 - img, cmap="gray")
             plt.axis("off")
             plt.show()
         elif event.char.lower() == "r":
