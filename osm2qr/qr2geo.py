@@ -27,8 +27,12 @@ class QR2Geo(Node):
         self.talk_topic = (
             self.get_parameter("talk_topic").get_parameter_value().string_value
         )
-        self.read_interval = self.get_parameter("read_interval")
-        self.plan_wait = self.get_parameter("plan_wait")
+        self.read_interval = (
+            self.get_parameter("read_interval").get_parameter_value().double_value
+        )
+        self.plan_wait = (
+            self.get_parameter("plan_wait").get_parameter_value().double_value
+        )
 
         self.sub = self.create_subscription(
             CompressedImage, self.camera_topic, self.read_qr_, 10
@@ -75,6 +79,7 @@ class QR2Geo(Node):
                             rclpy.duration.Duration(seconds=self.plan_wait)
                         )
 
+                        self.get_logger().info("Sending goal to action server")
                         send_goal_future = self.action_client.send_goal_async(
                             waypoint_msg, feedback_callback=self.feedback_callback
                         )

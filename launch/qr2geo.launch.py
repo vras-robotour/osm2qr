@@ -17,6 +17,8 @@ def generate_launch_description():
                     {
                         "camera_topic": "/luxonis/oak/left/image_raw/compressed",
                         "talk_topic": "/speak/info",
+                        "read_interval": 10.0,
+                        "plan_wait": 5.0,
                     }
                 ],
             )
