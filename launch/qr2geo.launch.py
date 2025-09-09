@@ -15,7 +15,7 @@ def generate_launch_description():
                 respawn_delay=2,
                 parameters=[
                     {
-                        "camera_topic": "/luxonis/oak/left/image_rect",
+                        "camera_topic": "/luxonis/oak/left/image_raw/compressed",
                         "talk_topic": "/speak/info",
                     }
                 ],
