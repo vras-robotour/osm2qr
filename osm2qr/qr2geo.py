@@ -17,7 +17,7 @@ class QR2Geo(Node):
     def __init__(self):
         super().__init__("qr2geo")
         self.declare_parameter("camera_topic", "camera")
-        self.declare_parameter("talk_topic", None)
+        self.declare_parameter("talk_topic", "")
         self.camera_topic = (
             self.get_parameter("camera_topic").get_parameter_value().string_value
         )
@@ -30,7 +30,7 @@ class QR2Geo(Node):
         )
         self.last_geo = None
 
-        if self.talk_topic is not None:
+        if self.talk_topic != "":
             self.pub = self.create_publisher(String, self.talk_topic, 10)
 
         self.action_client = ActionClient(
@@ -40,8 +40,8 @@ class QR2Geo(Node):
     def read_qr_(self, msg):
         """Read QR code from camera topic and publish geocode"""
         if (self.last_geo is not None) and (
-            self.get_clock().now() - self.last_geo
-        ).seconds < 5:
+            (self.get_clock().now() - self.last_geo).nanoseconds * 1e-9
+        ) < 5:
             return
 
         image = cv2.imdecode(np.frombuffer(msg.data, np.uint8), cv2.IMREAD_COLOR)
@@ -52,6 +52,7 @@ class QR2Geo(Node):
                 if code.type == "QRCODE":
                     data = code.data.decode("utf-8")
                     if data[:3] == "geo":
+                        data = data[4:].split(",").strip()
                         self.get_logger().info(data)
                         self.last_geo = self.get_clock().now()
                         self.get_logger().info("Geo QR code detected")
