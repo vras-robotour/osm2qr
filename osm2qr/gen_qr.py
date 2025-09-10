@@ -20,7 +20,6 @@ class GenQR(Node):
             self.get_parameter("coords_file").get_parameter_value().string_value
         )
         self.args = args()
-        self.get_logger().info(self.coords_file)
         self.args.coords_file = self.coords_file
 
         self.window = GUI(self.args)
