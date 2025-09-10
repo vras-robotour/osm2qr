@@ -11,7 +11,7 @@ from PIL import ImageTk
 import matplotlib.pyplot as plt
 from gpxpy import parse as gpxparse
 
-from background_map import get_background_image
+from osm2qr.background_map import get_background_image
 
 
 OSM_RECTANGLE_MARGIN = 50  # meters, margin around the map
@@ -170,16 +170,18 @@ class GUI:
             print("RoboTour GUI closed.")
             exit(0)
         elif event.char.lower() == self.save_qr_key.lower():
-            if self.counter > 0:
-                qr = self.create_qr((self.lat, self.lon))
+            if self.save_path is None:
+                pass
+            elif self.counter > 0:
                 if os.path.exists(self.save_path) is False:
                     os.makedirs(self.save_path)
+
+                qr = self.create_qr((self.lat, self.lon))
                 qr.png(self.save_path + f"qr{self.counter}.png", scale=self.qr_scale)
                 self.coords_label.config(
                     text=self.saved.format(self.counter), font=self.text_font
                 )
                 print(self.saved.format(self.counter))
-                self.root.after(self.wait_restore, self.restore_window)
             else:
                 print("No coordinates selected yet!")
         elif event.char.lower() == self.show_qr_key.lower():
@@ -291,16 +293,16 @@ def parse_args():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "--save_path",
-        type=str,
-        required=True,
-        help="Path to save generated QR codes (default: current directory).",
-    )
-    parser.add_argument(
         "--coords_file",
         type=str,
         required=True,
         help="Path to the GPX file with coordinates data.",
+    )
+    parser.add_argument(
+        "--save_path",
+        type=str,
+        default=None,
+        help="Path to save generated QR codes.",
     )
 
     return parser.parse_args()

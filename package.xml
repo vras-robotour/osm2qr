@@ -4,8 +4,9 @@
   <version>1.0.0</version>
   <description>OSM conversion to QR code.</description>
   <author email="lehkysim@fel.cvut.cz">Simon Lehky</author>
+  <author email="vlkjan6@fel.cvut.cz">Jan Vlk</author>
   <maintainer email="vlkjan6@fel.cvut.cz">Jan Vlk</maintainer>
-  <license>BSD</license>
+  <license>BSD-3-Clause</license>
 
   <exec_depend>rclpy</exec_depend>
   <exec_depend>std_msgs</exec_depend>
