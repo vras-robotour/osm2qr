@@ -86,16 +86,16 @@ class QR2Geo(Node):
                         self.get_clock().sleep_for(
                             rclpy.duration.Duration(seconds=self.plan_wait)
                         )
-                        self.send_goal_()
+                        self._send_goal()
 
-    def send_goal_(self):
+    def _send_goal(self):
         self.get_logger().info("Sending goal to action server")
         send_goal_future = self.action_client.send_goal_async(
-            self.waypoint_msg_, feedback_callback=self.feedback_callback_
+            self.waypoint_msg_, feedback_callback=self._feedback_callback
         )
-        send_goal_future.add_done_callback(self.goal_response_callback_)
+        send_goal_future.add_done_callback(self._goal_response_callback)
 
-    def goal_response_callback_(self, future):
+    def _goal_response_callback(self, future):
         self.goal_handle = future.result()
         if not self.goal_handle.accepted:
             self.get_logger().error("Goal rejected by server")
@@ -103,16 +103,16 @@ class QR2Geo(Node):
 
         self.get_logger().info("Goal accepted by server")
         result_future = self.goal_handle.get_result_async()
-        result_future.add_done_callback(self.result_callback_)
+        result_future.add_done_callback(self._result_callback)
 
-    def feedback_callback_(self, feedback_msg):
+    def _feedback_callback(self, feedback_msg):
         pass
 
-    def result_callback_(self, future):
+    def _result_callback(self, future):
         result = future.result().result
         if result.missed_waypoints:
             self.get_logger().warn(f"Missed waypoints: {result.missed_waypoints}")
-            self.send_goal_()
+            self._send_goal()
         else:
             self.get_logger().info("Successfully navigated all waypoints")
             if self.talk_topic != "":
