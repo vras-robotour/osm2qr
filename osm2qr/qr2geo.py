@@ -39,17 +39,21 @@ class QR2Geo(Node):
             CompressedImage, self.camera_topic, self.read_qr_, 10
         )
         self.last_geo = None
+        self.goal_handle = None
 
         if self.talk_topic != "":
             self.pub = self.create_publisher(String, self.talk_topic, 10)
             self.talk_detect = String()
             self.talk_finish = String()
+            self.talk_cancel = String()
             if "cs" in self.talk_topic:
                 self.talk_detect.data = "QR kód detekován"
                 self.talk_finish.data = "Cíl dosažen"
+                self.talk_cancel.data = "Cíl zrušen"
             else:
                 self.talk_detect.data = "Geo QR code detected"
                 self.talk_finish.data = "Goal reached"
+                self.talk_cancel.data = "Goal cancelled"
 
         self.action_client = ActionClient(
             self, FollowGPSWaypoints, "follow_gps_waypoints"
@@ -72,9 +76,11 @@ class QR2Geo(Node):
                     if data[:3] == "geo":
                         if self.talk_topic != "":
                             self.pub.publish(self.talk_detect)
+                        if self.goal_handle is not None:
+                            self._cancel_goal()
 
-                        data = list(map(float, data[4:].strip().split(",")))
                         self.last_geo = self.get_clock().now()
+                        data = list(map(float, data[4:].strip().split(",")))
                         self.get_logger().info(f"Geo QR code detected: {data}")
 
                         geo_pose = GeoPose()
@@ -82,6 +88,11 @@ class QR2Geo(Node):
                         geo_pose.position.longitude = data[1]
                         self.waypoint_msg_ = FollowGPSWaypoints.Goal()
                         self.waypoint_msg_.gps_poses = [geo_pose]
+
+                        if data[0] == 0.0 and data[1] == 0.0:
+                            self.get_logger().error("Cancel goal geo coordinates")
+                            self._cancel_goal()
+                            return
 
                         self.get_clock().sleep_for(
                             rclpy.duration.Duration(seconds=self.plan_wait)
@@ -104,6 +115,22 @@ class QR2Geo(Node):
         self.get_logger().info("Goal accepted by server")
         result_future = self.goal_handle.get_result_async()
         result_future.add_done_callback(self._result_callback)
+
+    def _cancel_goal(self):
+        if self.goal_handle is not None:
+            self.get_logger().info("Cancelling the current goal")
+            self.pub.publish(self.talk_cancel)
+            cancel_future = self.goal_handle.cancel_goal_async()
+            cancel_future.add_done_callback(self._cancel_response_callback)
+        else:
+            self.get_logger().warn("No goal to cancel")
+
+    def _cancel_response_callback(self, future):
+        cancel_result = future.result()
+        if cancel_result.goals_canceling:
+            self.get_logger().info("Goal successfully canceled")
+        else:
+            self.get_logger().warn("Failed to cancel goal")
 
     def _feedback_callback(self, feedback_msg):
         pass

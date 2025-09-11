@@ -11,7 +11,10 @@ from PIL import ImageTk
 import matplotlib.pyplot as plt
 from gpxpy import parse as gpxparse
 
-from osm2qr.background_map import get_background_image
+try:
+    from osm2qr.background_map import get_background_image
+except ModuleNotFoundError:
+    from background_map import get_background_image
 
 
 OSM_RECTANGLE_MARGIN = 50  # meters, margin around the map
