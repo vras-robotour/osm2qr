@@ -12,6 +12,7 @@ from std_msgs.msg import String
 from geographic_msgs.msg import GeoPose
 from sensor_msgs.msg import CompressedImage
 from nav2_msgs.action import FollowGPSWaypoints
+from nav2_msgs.srv import ClearEntireCostmap
 
 
 class QR2Geo(Node):
@@ -19,8 +20,9 @@ class QR2Geo(Node):
         super().__init__("qr2geo")
         self.declare_parameter("camera_topic", "camera")
         self.declare_parameter("talk_topic", "")
-        self.declare_parameter("read_interval", 10.0)
-        self.declare_parameter("plan_wait", 5.0)
+        self.declare_parameter("read_interval", 20.0)
+        self.declare_parameter("plan_wait", 15.0)
+        self.declare_parameter("clear_map", False)
 
         self.camera_topic = (
             self.get_parameter("camera_topic").get_parameter_value().string_value
@@ -33,6 +35,9 @@ class QR2Geo(Node):
         )
         self.plan_wait = (
             self.get_parameter("plan_wait").get_parameter_value().double_value
+        )
+        self.clear_map = (
+            self.get_parameter("clear_map").get_parameter_value().bool_value
         )
 
         self.sub = self.create_subscription(
@@ -58,6 +63,11 @@ class QR2Geo(Node):
         self.action_client = ActionClient(
             self, FollowGPSWaypoints, "follow_gps_waypoints"
         )
+        if self.clear_map:
+            self.clear_client = self.create_client(ClearEntireCostmap, "clear_plan_map")
+            while not self.cli.wait_for_service(timeout_sec=1.0):
+                self.get_logger().info("Service not available, waiting again...")
+            self.clear_req = ClearEntireCostmap.Request()
 
     def read_qr_(self, msg):
         """Read QR code from camera topic and publish geocode"""
@@ -94,6 +104,8 @@ class QR2Geo(Node):
                             self._cancel_goal()
                             return
 
+                        if self.clear_map:
+                            self.clear_client.call_async(self.req)
                         self.get_clock().sleep_for(
                             rclpy.duration.Duration(seconds=self.plan_wait)
                         )
