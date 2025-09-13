@@ -134,6 +134,7 @@ class QR2Geo(Node):
             self.pub.publish(self.talk_cancel)
             cancel_future = self.goal_handle.cancel_goal_async()
             cancel_future.add_done_callback(self._cancel_response_callback)
+            self.goal_handle = None
         else:
             self.get_logger().warn("No goal to cancel")
 
@@ -141,6 +142,7 @@ class QR2Geo(Node):
         cancel_result = future.result()
         if cancel_result.goals_canceling:
             self.get_logger().info("Goal successfully canceled")
+            self.goal_handle = None
         else:
             self.get_logger().warn("Failed to cancel goal")
 
@@ -156,6 +158,7 @@ class QR2Geo(Node):
             self.get_logger().info("Successfully navigated all waypoints")
             if self.talk_topic != "":
                 self.pub.publish(self.talk_finish)
+            self.goal_handle = None
 
 
 def main():
